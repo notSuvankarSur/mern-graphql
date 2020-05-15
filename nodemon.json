@@ -1,0 +1,7 @@
+{
+  "env": {
+    "MONGO_USER": "blurryface",
+    "MONGO_PASSWORD": "blurryface",
+    "MONGO_DB": "events-mern-graphql"
+  }
+}
