@@ -11,6 +11,29 @@ const User = require("./models/user");
 const app = express();
 app.use(bodyParser.json());
 
+const createdByUser = async (userId) => {
+  try {
+    const user = await User.findById(userId);
+    return { ...user._doc, createdEvents: userEvents(user._doc.createdEvents) };
+  } catch (error) {
+    throw error;
+  }
+};
+
+const userEvents = async (eventIds) => {
+  try {
+    const events = await Event.find({ _id: { $in: eventIds } });
+    return events.map((event) => {
+      return {
+        ...event._doc,
+        createdBy: createdByUser(event._doc.createdBy),
+      };
+    });
+  } catch (error) {
+    throw error;
+  }
+};
+
 app.use(
   "/graphql",
   graphQlHttp({
@@ -21,6 +44,7 @@ app.use(
             description: String!
             price: Float!
             date: String!
+            createdBy: User!
         }
 
         type User{
@@ -28,6 +52,7 @@ app.use(
             name: String!
             email: String!
             password: String
+            createdEvents: [Event!]
         }
 
         input EventInput{
@@ -59,7 +84,14 @@ app.use(
     rootValue: {
       event: async () => {
         try {
-          return await Event.find();
+          let events = await Event.find();
+          events = events.map((event) => {
+            return {
+              ...event._doc,
+              createdBy: createdByUser(event._doc.createdBy),
+            };
+          });
+          return events;
         } catch (error) {
           throw error;
         }
