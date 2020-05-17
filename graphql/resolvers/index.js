@@ -1,6 +1,6 @@
-const eventResolver = require("./events");
-const bookingResolver = require("./bookings");
-const userResolver = require("./users");
+const eventResolver = require("./event");
+const bookingResolver = require("./booking");
+const userResolver = require("./auth");
 
 module.exports = {
   ...eventResolver,
