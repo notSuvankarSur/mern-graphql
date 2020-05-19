@@ -10,7 +10,9 @@ const NavBar = (props) => (
       return (
         <header className="main-navigation">
           <div className="main-navigation__logo">
-            <h1>Event Master</h1>
+            <NavLink to="/">
+              <h1>Event Master</h1>
+            </NavLink>
           </div>
           <nav className="main-navigation__items">
             <ul>
@@ -23,9 +25,14 @@ const NavBar = (props) => (
                 <NavLink to="/events">Events</NavLink>
               </li>
               {context.token && (
-                <li>
-                  <NavLink to="/bookings">Bookings</NavLink>
-                </li>
+                <>
+                  <li>
+                    <NavLink to="/bookings">Bookings</NavLink>
+                  </li>
+                  <li>
+                    <button onClick={context.logout}>Logout</button>
+                  </li>
+                </>
               )}
             </ul>
           </nav>
