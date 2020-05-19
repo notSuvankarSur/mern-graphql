@@ -18,6 +18,7 @@ module.exports = {
       title: eventInput.title,
       description: eventInput.description,
       price: +eventInput.price,
+      date: eventInput.date,
       createdBy: req.userId,
     });
 
