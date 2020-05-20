@@ -7,7 +7,7 @@ module.exports = {
     if (!req.isAuth) throw new Error("Not authenticated");
 
     try {
-      const bookings = await Booking.find();
+      const bookings = await Booking.find({ user: req.userId });
       return bookings.map((booking) => transformBooking(booking));
     } catch (error) {
       throw error;
@@ -17,12 +17,12 @@ module.exports = {
     if (!req.isAuth) throw new Error("Not authenticated");
 
     try {
-      const fetechedEvent = await Event.findById(args.eventId);
-      if (!fetechedEvent) return new Error("No such event exists");
+      const fetchedEvent = await Event.findById(args.eventId);
+      if (!fetchedEvent) return new Error("No such event exists");
 
       const booking = new Booking({
         user: req.userId,
-        event: fetechedEvent,
+        event: fetchedEvent,
       });
       await booking.save();
       return transformBooking(booking);

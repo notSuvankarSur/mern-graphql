@@ -69,15 +69,19 @@ class Auth extends Component {
           "Content-Type": "application/json",
         },
       });
-      const {
-        data: {
-          loginUser: { token, userId, tokenExpiration },
-        },
-      } = await res.json();
-      console.log(token);
-      if (token) {
-        this.context.login(token, userId, tokenExpiration);
+      const result = await res.json();
+      if (this.state.isLogin && result.data) {
+        const {
+          data: {
+            loginUser: { token, userId, tokenExpiration },
+          },
+        } = result;
+        //   console.log(token);
+        if (token) {
+          this.context.login(token, userId, tokenExpiration);
+        }
       }
+      if (result.error) throw new Error();
     } catch (error) {
       throw error;
     }

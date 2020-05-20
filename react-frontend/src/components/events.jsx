@@ -15,10 +15,6 @@ class Events extends Component {
     this.descriptionRef = createRef();
   }
 
-  componentDidMount() {
-    this.fetchEvents();
-  }
-
   static contextType = AuthContext;
 
   state = {
@@ -27,6 +23,16 @@ class Events extends Component {
     isLoading: false,
     selectedEvent: null,
   };
+
+  isActive = true;
+
+  componentDidMount() {
+    this.fetchEvents();
+  }
+
+  componentWillUnmount() {
+    this.isActive = false;
+  }
 
   handleCreateClicked = () => {
     this.setState({ createClicked: true });
@@ -75,7 +81,7 @@ class Events extends Component {
         },
       });
       const { data } = await res.json();
-      console.log(data);
+      // console.log(data);
       this.setState((prevState) => {
         const events = [...prevState.events];
         events.push({
@@ -105,8 +111,41 @@ class Events extends Component {
     this.setState({ createClicked: false, selectedEvent: null });
   };
 
-  handleBookEvent = (event) => {
-    console.log(event);
+  handleBookEvent = async () => {
+    if (!this.context.token) {
+      this.setState({ selectedEvent: null });
+      return;
+    }
+
+    const requestBody = {
+      query: `
+      mutation{
+        createBooking(eventId: "${this.state.selectedEvent._id}"){
+          _id
+          createdAt
+          updatedAt
+        }
+      }
+        `,
+    };
+
+    try {
+      const res = await fetch("http://localhost:8000/graphql", {
+        method: "POST",
+        body: JSON.stringify(requestBody),
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: "Bearer " + this.context.token,
+        },
+      });
+      const result = await res.json();
+      // this.setState({ events, isLoading: false });
+      console.log(result);
+      this.setState({ selectedEvent: null });
+    } catch (error) {
+      // this.setState({ isLoading: false });
+      throw error;
+    }
   };
 
   fetchEvents = async () => {
@@ -140,10 +179,10 @@ class Events extends Component {
       const {
         data: { events },
       } = await res.json();
-      this.setState({ events, isLoading: false });
-      console.log(events);
+      if (this.isActive) this.setState({ events, isLoading: false });
+      // console.log(events);
     } catch (error) {
-      this.setState({ isLoading: false });
+      if (this.isActive) this.setState({ isLoading: false });
       throw error;
     }
   };
@@ -186,9 +225,9 @@ class Events extends Component {
             title={this.state.selectedEvent.title}
             canConfirm
             canCancel
-            onConfirm={() => this.handleBookEvent(this.state.selectedEvent)}
+            onConfirm={() => this.handleBookEvent()}
             onCancel={this.handleCancel}
-            confirmText="Book"
+            confirmText={this.context.token ? "Book" : "Confirm"}
           >
             <h1>{this.state.selectedEvent.description}</h1>
             <h3>
