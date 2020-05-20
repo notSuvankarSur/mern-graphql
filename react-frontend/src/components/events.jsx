@@ -3,6 +3,8 @@ import "./events.css";
 import Modal from "./Modal/modal";
 import Backdrop from "./Backdrop/backdrop";
 import AuthContext from "../context/authContext";
+import EventList from "./EventList/eventList";
+import Spinner from "./Spinner/spinner";
 
 class Events extends Component {
   constructor(props) {
@@ -22,6 +24,8 @@ class Events extends Component {
   state = {
     createClicked: false,
     events: [],
+    isLoading: false,
+    selectedEvent: null,
   };
 
   handleCreateClicked = () => {
@@ -45,9 +49,6 @@ class Events extends Component {
       return;
     }
 
-    const event = { title, price, date, description };
-    console.log(event);
-
     const requestBody = {
       query: `
           mutation{
@@ -57,10 +58,6 @@ class Events extends Component {
               description
               price
               date
-              createdBy{
-                _id
-                email
-              }
             }
           }
         `,
@@ -78,18 +75,43 @@ class Events extends Component {
         },
       });
       const { data } = await res.json();
-      this.fetchEvents();
       console.log(data);
+      this.setState((prevState) => {
+        const events = [...prevState.events];
+        events.push({
+          _id: data.createEvent._id,
+          title: data.createEvent.title,
+          description: data.createEvent.description,
+          price: data.createEvent.price,
+          date: data.createEvent.date,
+          createdBy: {
+            _id: this.context.userId,
+          },
+        });
+        return { events: events };
+      });
     } catch (error) {
       throw error;
     }
   };
+  handleOnViewDetails = (eventId) => {
+    this.setState((prevState) => {
+      const event = prevState.events.find((e) => e._id === eventId);
+      return { selectedEvent: event };
+    });
+  };
 
   handleCancel = () => {
-    this.setState({ createClicked: false });
+    this.setState({ createClicked: false, selectedEvent: null });
+  };
+
+  handleBookEvent = (event) => {
+    console.log(event);
   };
 
   fetchEvents = async () => {
+    this.setState({ isLoading: true });
+
     const requestBody = {
       query: `
           {
@@ -101,7 +123,6 @@ class Events extends Component {
               date
               createdBy{
                 _id
-                email
               }
             }
           }
@@ -119,9 +140,10 @@ class Events extends Component {
       const {
         data: { events },
       } = await res.json();
-      this.setState({ events });
+      this.setState({ events, isLoading: false });
       console.log(events);
     } catch (error) {
+      this.setState({ isLoading: false });
       throw error;
     }
   };
@@ -129,7 +151,7 @@ class Events extends Component {
   render() {
     return (
       <>
-        {this.state.createClicked && <Backdrop />}
+        {(this.state.createClicked || this.state.selectedEvent) && <Backdrop />}
         {this.state.createClicked && (
           <Modal
             title="Add event"
@@ -137,6 +159,7 @@ class Events extends Component {
             canCancel
             onConfirm={this.handleConfirm}
             onCancel={this.handleCancel}
+            confirmText="Confirm"
           >
             <form action="">
               <div className="form-control">
@@ -158,6 +181,22 @@ class Events extends Component {
             </form>
           </Modal>
         )}
+        {this.state.selectedEvent && (
+          <Modal
+            title={this.state.selectedEvent.title}
+            canConfirm
+            canCancel
+            onConfirm={() => this.handleBookEvent(this.state.selectedEvent)}
+            onCancel={this.handleCancel}
+            confirmText="Book"
+          >
+            <h1>{this.state.selectedEvent.description}</h1>
+            <h3>
+              ${this.state.selectedEvent.price} -{" "}
+              {new Date(this.state.selectedEvent.date).toLocaleDateString()}
+            </h3>
+          </Modal>
+        )}
         {this.context.token && (
           <div className="events-control">
             <p>Share your own events here!</p>
@@ -166,13 +205,15 @@ class Events extends Component {
             </button>
           </div>
         )}
-        <ul className="events__list">
-          {this.state.events.map((event) => (
-            <li key={event._id} className="events__list-item">
-              {event.description}
-            </li>
-          ))}
-        </ul>
+        {this.state.isLoading ? (
+          <Spinner />
+        ) : (
+          <EventList
+            events={this.state.events}
+            userId={this.context.userId}
+            onViewDetails={this.handleOnViewDetails}
+          />
+        )}
       </>
     );
   }

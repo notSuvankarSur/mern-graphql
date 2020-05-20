@@ -7,17 +7,3 @@
   border: 1px solid rgb(231, 34, 172);
   border-radius: 0.5rem;
 }
-
-.events__list {
-  width: 40rem;
-  max-width: 90%;
-  margin: 2rem auto;
-  list-style: none;
-  padding: 0;
-}
-
-.events__list-item {
-  margin: 1rem 0;
-  padding: 1rem;
-  border: 1px solid rgb(211, 37, 196);
-}
