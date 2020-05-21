@@ -57,8 +57,8 @@ class Events extends Component {
 
     const requestBody = {
       query: `
-          mutation{
-            createEvent(eventInput: {title: "${title}", description: "${description}", price: ${price}, date: "${date}"}){
+          mutation CreateEvent($title: String!, $desc: String!, $price: Float!, $date: String!){
+            createEvent(eventInput: {title: $title, description: $desc, price: $price, date: $date}){
               _id
               title
               description
@@ -67,6 +67,12 @@ class Events extends Component {
             }
           }
         `,
+      variables: {
+        title: title,
+        desc: description,
+        price: price,
+        date: date,
+      },
     };
 
     const token = this.context.token;
@@ -80,8 +86,10 @@ class Events extends Component {
           Authorization: "Bearer " + token,
         },
       });
+      if (res.status !== 200 && res.status !== 201) {
+        throw new Error("Failed");
+      }
       const { data } = await res.json();
-      // console.log(data);
       this.setState((prevState) => {
         const events = [...prevState.events];
         events.push({
@@ -119,14 +127,17 @@ class Events extends Component {
 
     const requestBody = {
       query: `
-      mutation{
-        createBooking(eventId: "${this.state.selectedEvent._id}"){
+      mutation CreateBooking($id: ID!){
+        createBooking(eventId: $id){
           _id
           createdAt
           updatedAt
         }
       }
         `,
+      variables: {
+        id: this.state.selectedEvent._id,
+      },
     };
 
     try {
@@ -138,9 +149,11 @@ class Events extends Component {
           Authorization: "Bearer " + this.context.token,
         },
       });
-      const result = await res.json();
+      if (res.status !== 200 && res.status !== 201) {
+        throw new Error("Failed");
+      }
+      // const result = await res.json();
       // this.setState({ events, isLoading: false });
-      console.log(result);
       this.setState({ selectedEvent: null });
     } catch (error) {
       // this.setState({ isLoading: false });
@@ -176,6 +189,9 @@ class Events extends Component {
           "Content-Type": "application/json",
         },
       });
+      if (res.status !== 200 && res.status !== 201) {
+        throw new Error("Failed");
+      }
       const {
         data: { events },
       } = await res.json();

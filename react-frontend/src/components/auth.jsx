@@ -37,28 +37,37 @@ class Auth extends Component {
     const requestBody = !this.state.isLogin
       ? {
           query: `
-        mutation{
+        mutation CreateUser($name: String!, $email: String!, $password: String!){
             createUser(userInput: {
-              name: "${name}",
-              email: "${email}",
-              password: "${password}"
+              name: $name,
+              email: $email,
+              password: $password
             }){
               _id
               email
             }
           }
         `,
+          variables: {
+            name: name,
+            email: email,
+            password: password,
+          },
         }
       : {
           query: `
-        {
-            loginUser(email: "${email}", password: "${password}"){
+          query LoginUser($email: String!, $password: String!){
+            loginUser(email: $email, password: $password){
               userId
               token
               tokenExpiration
             }
           }
         `,
+          variables: {
+            email: email,
+            password: password,
+          },
         };
 
     try {
@@ -69,21 +78,23 @@ class Auth extends Component {
           "Content-Type": "application/json",
         },
       });
-      const result = await res.json();
-      if (this.state.isLogin && result.data) {
+      if (res.status !== 200 && res.status !== 201) {
+        throw new Error("Failed");
+      }
+
+      if (this.state.isLogin) {
         const {
           data: {
             loginUser: { token, userId, tokenExpiration },
           },
-        } = result;
+        } = await res.json();
         //   console.log(token);
         if (token) {
           this.context.login(token, userId, tokenExpiration);
         }
       }
-      if (result.error) throw new Error();
     } catch (error) {
-      throw error;
+      console.log(error);
     }
   };
 
