@@ -1,5 +1,12 @@
 const User = require("../models/user");
 const Event = require("../models/event");
+const DataLoader = require("dataloader");
+
+const eventLoader = new DataLoader((eventIds) => getEvents(eventIds));
+
+const userLoader = new DataLoader((userIds) =>
+  User.find({ _id: { $in: userIds } })
+);
 
 const transformEvent = (event) => ({
   ...event._doc,
@@ -17,11 +24,11 @@ const transformBooking = (booking) => ({
 
 const getUser = async (userId) => {
   try {
-    const user = await User.findById(userId);
+    const user = await userLoader.load(userId.toString());
     return {
       ...user._doc,
       password: null,
-      createdEvents: () => getEvents(user._doc.createdEvents),
+      createdEvents: () => eventLoader.loadMany(user._doc.createdEvents),
     };
   } catch (error) {
     throw error;
@@ -38,8 +45,8 @@ const getEvents = async (eventIds) => {
 };
 
 const getEvent = async (eventId) => {
-  const event = await Event.findById(eventId);
-  return transformEvent(event);
+  const event = await eventLoader.load(eventId.toString());
+  return event;
 };
 
 module.exports = {
