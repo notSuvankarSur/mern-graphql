@@ -2,11 +2,14 @@ import React, { Component } from "react";
 import AuthContext from "../context/authContext";
 import Spinner from "./Spinner/spinner";
 import BookingList from "./Booking/bookingList";
+import BookingChart from "./Booking/bookingChart";
+import "./bookings.css";
 
 class Bookings extends Component {
   state = {
     isLoading: false,
     bookings: [],
+    outputType: "list",
   };
 
   static contextType = AuthContext;
@@ -15,18 +18,25 @@ class Bookings extends Component {
     this.fetchBookings();
   }
 
+  handleOutputType = (outputType) => {
+    this.setState({ outputType });
+  };
+
   handleCancelBooking = async (bookingId) => {
     this.setState({ isLoading: true });
 
     const requestBody = {
       query: `
-        mutation{
-          cancelBooking(bookingId: "${bookingId}"){
+        mutation CancelBooking($id: ID!){
+          cancelBooking(bookingId: $id){
             _id
             title
           }
         }
       `,
+      variables: {
+        id: bookingId,
+      },
     };
 
     try {
@@ -66,6 +76,7 @@ class Bookings extends Component {
             createdAt
             event{
               _id
+              price
               title
               date
             }
@@ -103,10 +114,32 @@ class Bookings extends Component {
         {this.state.isLoading ? (
           <Spinner />
         ) : (
-          <BookingList
-            bookings={this.state.bookings}
-            onCancelBooking={this.handleCancelBooking}
-          />
+          <>
+            <div className="bookings-control">
+              <button
+                className={this.state.outputType === "list" ? "active" : ""}
+                onClick={() => this.handleOutputType("list")}
+              >
+                List
+              </button>
+              <button
+                className={this.state.outputType === "chart" ? "active" : ""}
+                onClick={() => this.handleOutputType("chart")}
+              >
+                Chart
+              </button>
+            </div>
+            <div>
+              {this.state.outputType === "list" ? (
+                <BookingList
+                  bookings={this.state.bookings}
+                  onCancelBooking={this.handleCancelBooking}
+                />
+              ) : (
+                <BookingChart bookings={this.state.bookings} />
+              )}
+            </div>
+          </>
         )}
       </>
     );
