@@ -94,7 +94,7 @@ class Auth extends Component {
         }
       }
     } catch (error) {
-      console.log(error);
+      throw error;
     }
   };
 
